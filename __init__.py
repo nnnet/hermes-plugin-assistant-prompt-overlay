@@ -61,6 +61,19 @@ def register(ctx: Any) -> None:
     # the same "finish the job, don't fabricate" ground.
     pb.TASK_COMPLETION_GUIDANCE = ""
 
+    # ``agent.system_prompt`` does ``from agent.prompt_builder import
+    # KANBAN_GUIDANCE, TOOL_USE_ENFORCEMENT_*`` at module load, binding the
+    # ORIGINAL string objects into its namespace. A later ``pb.X = NEW``
+    # updates pb's binding but not sp's already-imported reference, so the
+    # build function would still see upstream values. Re-bind those names in
+    # sp's namespace too so the running prompt builder reads our versions.
+    sp.KANBAN_GUIDANCE = KANBAN_GUIDANCE
+    sp.TOOL_USE_ENFORCEMENT_GUIDANCE = TOOL_USE_ENFORCEMENT_GUIDANCE
+    sp.TOOL_USE_ENFORCEMENT_MODELS = TOOL_USE_ENFORCEMENT_MODELS
+    # TASK_COMPLETION_GUIDANCE is imported into sp too — blank it there.
+    if hasattr(sp, "TASK_COMPLETION_GUIDANCE"):
+        sp.TASK_COMPLETION_GUIDANCE = ""
+
     # --- Wrap build_system_prompt_parts ---
     from .overlays.runtime_identity import build_runtime_identity_line
     from .overlays.google_creds import build_google_creds_block
