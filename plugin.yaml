@@ -1,0 +1,17 @@
+name: assistant-prompt-overlay
+kind: standalone
+version: 0.1.0
+description: |
+  Гермес-role system-prompt customizations.
+  Replaces upstream KANBAN_GUIDANCE / TOOL_USE_ENFORCEMENT_GUIDANCE /
+  TOOL_USE_ENFORCEMENT_MODELS constants in agent.prompt_builder with our
+  extended versions, blanks TASK_COMPLETION_GUIDANCE (covered by the new
+  enforcement block), and wraps agent.system_prompt.build_system_prompt_parts
+  to inject 4 additional sections for the operator-assistant profile:
+   * ACTIVE RUNTIME identity (model/provider/base_url)
+   * ASSISTANT_DELEGATION_GUIDANCE (Гермес 6-question pre-step + delegation)
+   * GOOGLE CREDS live state (read from /opt/data/.google-creds-state.json)
+   * WORKFLOW TEMPLATES live inventory (scanned from /opt/hermes-workflows/)
+  All patches applied at register() time; no upstream files edited.
+author: nnnet/AiManager
+repo: https://github.com/nnnet/hermes-plugin-assistant-prompt-overlay
