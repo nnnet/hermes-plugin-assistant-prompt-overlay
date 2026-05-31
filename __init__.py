@@ -85,8 +85,30 @@ def register(ctx: Any) -> None:
 
     _orig_build = sp.build_system_prompt_parts
 
-    def _wrapped(agent: Any, system_message: Any = None) -> list[str]:
+    def _wrapped(agent: Any, system_message: Any = None):
         parts = _orig_build(agent, system_message)
+
+        # Upstream changed return type from list to dict (3-tier:
+        # stable / context / volatile) in 2026-05-30 release. Provide a
+        # uniform ``_add(block)`` shim that appends to whichever
+        # container we got — preserves backward compat if upstream
+        # reverts.
+        def _add(block: str) -> None:
+            if not block:
+                return
+            if isinstance(parts, dict):
+                # Append to volatile tier — least likely to invalidate
+                # prompt cache; new dynamic blocks (identity, delegation
+                # guidance) naturally belong with memory/profile.
+                vol = parts.get("volatile")
+                if isinstance(vol, list):
+                    vol.append(block)
+                elif isinstance(vol, str):
+                    parts["volatile"] = vol + "\n\n" + block
+                else:
+                    parts["volatile"] = block
+            else:
+                parts.append(block)
 
         # Runtime identity — emit early so the strong-attention prefix
         # carries authoritative model/provider. We can't easily reorder
@@ -94,7 +116,7 @@ def register(ctx: Any) -> None:
         # of prefix position but still inside the system prompt.
         ident = build_runtime_identity_line(agent)
         if ident:
-            parts.append(ident)
+            _add(ident)
 
         # Гермес-role gating: chief_spawn / mc_project_create present AND
         # terminal absent (operator-assistant, not a worker).
@@ -105,13 +127,13 @@ def register(ctx: Any) -> None:
         )
         is_operator_assistant = "terminal" not in valid_tools
         if can_delegate and is_operator_assistant:
-            parts.append(ASSISTANT_DELEGATION_GUIDANCE)
+            _add(ASSISTANT_DELEGATION_GUIDANCE)
             creds = build_google_creds_block()
             if creds:
-                parts.append(creds)
+                _add(creds)
             wf = build_workflow_templates_block()
             if wf:
-                parts.append(wf)
+                _add(wf)
 
         return parts
 
