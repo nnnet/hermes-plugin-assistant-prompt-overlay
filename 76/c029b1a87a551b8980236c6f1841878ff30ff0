@@ -1,0 +1,29 @@
+__init__.py
+  s_1b99a7ec9e9aa9::t_95f41b05da398d 50
+  s_1b99a7ec9e9aa9::t_52319b5e94756a 28
+  s_1b99a7ec9e9aa9::t_b6b6f3386bc8ad 114-123,129-133,135-140
+  s_1b99a7ec9e9aa9::t_08ae9ed6d57ce8 17-22
+constants/assistant_delegation.py
+  s_1b99a7ec9e9aa9::t_0bd3cc4d6866e4 252-254
+  s_1b99a7ec9e9aa9::t_7b2099d4582b03 701-707,709-710,717-718
+overlays/workflow_templates.py
+  s_1b99a7ec9e9aa9::t_534b0ffbee1ca2 49-54
+constants/team_shape.py
+  s_1b99a7ec9e9aa9::t_a82de2f4739e53 1-53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "76c029b1a87a551b8980236c6f1841878ff30ff0",
+  "prompts": {},
+  "sessions": {
+    "s_1b99a7ec9e9aa9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5025e0d8-1d1b-4f97-8c52-eec971a58fbd",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "nnnet <zkowkmdx@sharklasers.com>"
+    }
+  }
+}
