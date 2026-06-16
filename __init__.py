@@ -48,6 +48,7 @@ def register(ctx: Any) -> None:
     # --- Replace module-level constants in agent.prompt_builder ---
     from .constants.assistant_delegation import ASSISTANT_DELEGATION_GUIDANCE
     from .constants.team_shape import TEAM_SHAPE_SELECTION_GUIDANCE
+    from .constants.google_workspace import GOOGLE_WORKSPACE_GUIDANCE
     from .constants.kanban_guidance import KANBAN_GUIDANCE
     from .constants.tool_use_enforcement import (
         TOOL_USE_ENFORCEMENT_GUIDANCE,
@@ -138,6 +139,12 @@ def register(ctx: Any) -> None:
                 wf = build_workflow_templates_block()
                 if wf:
                     _add(wf)
+
+        # Google Workspace — inject only when the agent actually holds the
+        # google_workspace MCP tools. Counters the model's default refusal to
+        # act on the user's Google account ("here's a script to run yourself").
+        if any("google_workspace" in t for t in valid_tools):
+            _add(GOOGLE_WORKSPACE_GUIDANCE)
 
         return parts
 
