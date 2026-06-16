@@ -2,7 +2,7 @@
 
 Replaces upstream constants in ``agent.prompt_builder`` and wraps
 ``agent.system_prompt.build_system_prompt_parts`` to inject our
-Google-creds / workflow-templates / Гермес-delegation blocks.
+workflow-templates / Гермес-delegation blocks.
 
 All patches applied at ``register()`` time. No upstream files are edited.
 
@@ -15,7 +15,6 @@ What it replaces (override module-level constants in agent.prompt_builder):
 
 What it adds (wrapped build_system_prompt_parts appends to ``stable_parts``):
   - ASSISTANT_DELEGATION_GUIDANCE     — gated on chief_spawn+!terminal
-  - GOOGLE CREDS live state           — gated on same as delegation
   - WORKFLOW TEMPLATES live inventory — gated on same as delegation
 """
 
@@ -73,7 +72,6 @@ def register(ctx: Any) -> None:
         sp.TASK_COMPLETION_GUIDANCE = ""
 
     # --- Wrap build_system_prompt_parts ---
-    from .overlays.google_creds import build_google_creds_block
     from .overlays.workflow_templates import build_workflow_templates_block
 
     if getattr(sp.build_system_prompt_parts, "_overlay_wrapped", False):
@@ -117,9 +115,6 @@ def register(ctx: Any) -> None:
         is_operator_assistant = "terminal" not in valid_tools
         if can_delegate and is_operator_assistant:
             _add(ASSISTANT_DELEGATION_GUIDANCE)
-            creds = build_google_creds_block()
-            if creds:
-                _add(creds)
             wf = build_workflow_templates_block()
             if wf:
                 _add(wf)

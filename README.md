@@ -43,12 +43,10 @@ The plugin's `register()` runs at startup. It:
    and blanks `TASK_COMPLETION_GUIDANCE` (the new enforcement block
    covers the same ground).
 2. Wraps `agent.system_prompt.build_system_prompt_parts` to append
-   three extra sections **only when the profile is the
+   two extra sections **only when the profile is the
    operator-assistant** (`chief_spawn` or `mc_project_create` present
    AND `terminal` absent):
    - ASSISTANT_DELEGATION_GUIDANCE (the Гермес-role block)
-   - GOOGLE CREDS live state (read from
-     `/opt/data/.google-creds-state.json`)
    - WORKFLOW TEMPLATES live inventory (scanned from
      `/opt/hermes-workflows/`)
 
@@ -89,6 +87,5 @@ hermes-plugin-assistant-prompt-overlay/
 │   └── tool_use_enforcement.py          # replacement enforcement constants
 └── overlays/
     ├── __init__.py
-    ├── google_creds.py                  # build_google_creds_block()
     └── workflow_templates.py            # build_workflow_templates_block()
 ```
