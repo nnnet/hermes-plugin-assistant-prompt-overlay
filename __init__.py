@@ -14,13 +14,18 @@ What it replaces (override module-level constants in agent.prompt_builder):
   - ``ASSISTANT_DELEGATION_GUIDANCE``  — new constant, used by our wrapper
 
 What it adds (wrapped build_system_prompt_parts appends to ``stable_parts``):
-  - ASSISTANT_DELEGATION_GUIDANCE     — gated on chief_spawn+!terminal
-  - WORKFLOW TEMPLATES live inventory — gated on same as delegation
+  - ASSISTANT_DELEGATION_GUIDANCE     — operator + chief (chief_spawn+!terminal)
+  - TEAM_SHAPE_SELECTION_GUIDANCE     — chief (Тимлид) ONLY (HERMES_KANBAN_BOARD)
+  - WORKFLOW TEMPLATES live inventory — chief (Тимлид) ONLY (same gate)
+
+Team-shape choice lives with the Тимлид, not the operator: the operator
+delegates the raw goal; the chief classifies + picks + runs the template.
 """
 
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -42,6 +47,7 @@ def register(ctx: Any) -> None:
 
     # --- Replace module-level constants in agent.prompt_builder ---
     from .constants.assistant_delegation import ASSISTANT_DELEGATION_GUIDANCE
+    from .constants.team_shape import TEAM_SHAPE_SELECTION_GUIDANCE
     from .constants.kanban_guidance import KANBAN_GUIDANCE
     from .constants.tool_use_enforcement import (
         TOOL_USE_ENFORCEMENT_GUIDANCE,
@@ -105,19 +111,33 @@ def register(ctx: Any) -> None:
             else:
                 parts.append(block)
 
-        # Гермес-role gating: chief_spawn / mc_project_create present AND
-        # terminal absent (operator-assistant, not a worker).
+        # Role gating. Both the operator (Гермес) and the chief (Тимлид)
+        # delegate (chief_spawn present) and run without terminal, so the
+        # delegation block goes to both. But TEAM-SHAPE SELECTION must live
+        # ONLY with the Тимлид: the operator passes the raw goal, the chief
+        # classifies + picks + runs the workflow template after delegation.
+        #
+        # Discriminator: a chief worker is dispatched with HERMES_KANBAN_BOARD
+        # set (same signal chief_tools.py uses); the operator is the gateway
+        # process and has no such env. Sub-chiefs carry it too — they need the
+        # catalog as well.
         valid_tools = getattr(agent, "valid_tool_names", None) or set()
         can_delegate = (
             "chief_spawn" in valid_tools
             or "mc_project_create" in valid_tools
         )
-        is_operator_assistant = "terminal" not in valid_tools
-        if can_delegate and is_operator_assistant:
+        no_terminal = "terminal" not in valid_tools
+        is_chief = bool(os.environ.get("HERMES_KANBAN_BOARD"))
+
+        if can_delegate and no_terminal:
+            # Delegation role block — operator and chief alike.
             _add(ASSISTANT_DELEGATION_GUIDANCE)
-            wf = build_workflow_templates_block()
-            if wf:
-                _add(wf)
+            # Team-shape catalog + selection — chief (Тимлид) only.
+            if is_chief:
+                _add(TEAM_SHAPE_SELECTION_GUIDANCE)
+                wf = build_workflow_templates_block()
+                if wf:
+                    _add(wf)
 
         return parts
 

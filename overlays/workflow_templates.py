@@ -46,12 +46,12 @@ def build_workflow_templates_block() -> Optional[str]:
         return (
             "\n## WORKFLOW TEMPLATES — LIVE INVENTORY (just-read)\n"
             "These are TEAM-SHAPE templates (composition + cycle), "
-            "NOT domain-specific pipelines. Classify the user's "
-            "wish into a team type (dev/research/creative/ops) and "
-            "name the matching template in the chief brief — the "
-            "team self-decomposes domain work inside the cycle. "
-            "See the `Team-shape workflow templates` section above "
-            "for the full decision flow. Available templates:\n"
+            "NOT domain-specific pipelines. You are the Тимлид: classify "
+            "the delegated goal into a team type (dev/research/creative/"
+            "ops), then pick the matching template by `description` and "
+            "run it yourself via `workflow_run` — the team self-decomposes "
+            "domain work inside the cycle. See the `You are the Тимлид` "
+            "section for the full decision flow. Available templates:\n"
             + "\n".join(entries) + "\n"
         )
     except Exception as exc:
