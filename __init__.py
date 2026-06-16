@@ -119,16 +119,18 @@ def register(ctx: Any) -> None:
         # classifies + picks + runs the workflow template after delegation.
         #
         # Discriminator: a chief worker is dispatched with HERMES_KANBAN_BOARD
-        # set (same signal chief_tools.py uses); the operator is the gateway
-        # process and has no such env. Sub-chiefs carry it too — they need the
-        # catalog as well.
+        # set to its own board id. The gateway process carries the literal
+        # "default" (the operator's home board), so we must exclude that — only
+        # a real, non-"default" board means we are inside a chief worker.
+        # Sub-chiefs carry their own board too — they need the catalog as well.
         valid_tools = getattr(agent, "valid_tool_names", None) or set()
         can_delegate = (
             "chief_spawn" in valid_tools
             or "mc_project_create" in valid_tools
         )
         no_terminal = "terminal" not in valid_tools
-        is_chief = bool(os.environ.get("HERMES_KANBAN_BOARD"))
+        _board = os.environ.get("HERMES_KANBAN_BOARD", "")
+        is_chief = bool(_board) and _board != "default"
 
         if can_delegate and no_terminal:
             # Delegation role block — operator and chief alike.
@@ -149,12 +151,6 @@ def register(ctx: Any) -> None:
         has_google = any("google_workspace" in t for t in valid_tools)
         if has_google or (can_delegate and no_terminal):
             _add(GOOGLE_WORKSPACE_GUIDANCE)
-        logger.info(
-            "overlay gate: chief=%s delegate=%s no_terminal=%s "
-            "google_tools=%s n_valid=%d google_block=%s",
-            is_chief, can_delegate, no_terminal, has_google,
-            len(valid_tools), has_google or (can_delegate and no_terminal),
-        )
 
         return parts
 
