@@ -2,8 +2,7 @@
 
 Replaces upstream constants in ``agent.prompt_builder`` and wraps
 ``agent.system_prompt.build_system_prompt_parts`` to inject our
-runtime-identity / Google-creds / workflow-templates / Гермес-delegation
-blocks.
+Google-creds / workflow-templates / Гермес-delegation blocks.
 
 All patches applied at ``register()`` time. No upstream files are edited.
 
@@ -15,7 +14,6 @@ What it replaces (override module-level constants in agent.prompt_builder):
   - ``ASSISTANT_DELEGATION_GUIDANCE``  — new constant, used by our wrapper
 
 What it adds (wrapped build_system_prompt_parts appends to ``stable_parts``):
-  - ACTIVE RUNTIME identity (model/provider/base_url block)
   - ASSISTANT_DELEGATION_GUIDANCE     — gated on chief_spawn+!terminal
   - GOOGLE CREDS live state           — gated on same as delegation
   - WORKFLOW TEMPLATES live inventory — gated on same as delegation
@@ -75,7 +73,6 @@ def register(ctx: Any) -> None:
         sp.TASK_COMPLETION_GUIDANCE = ""
 
     # --- Wrap build_system_prompt_parts ---
-    from .overlays.runtime_identity import build_runtime_identity_line
     from .overlays.google_creds import build_google_creds_block
     from .overlays.workflow_templates import build_workflow_templates_block
 
@@ -110,14 +107,6 @@ def register(ctx: Any) -> None:
             else:
                 parts.append(block)
 
-        # Runtime identity — emit early so the strong-attention prefix
-        # carries authoritative model/provider. We can't easily reorder
-        # the upstream parts list; appending at the end is a small loss
-        # of prefix position but still inside the system prompt.
-        ident = build_runtime_identity_line(agent)
-        if ident:
-            _add(ident)
-
         # Гермес-role gating: chief_spawn / mc_project_create present AND
         # terminal absent (operator-assistant, not a worker).
         valid_tools = getattr(agent, "valid_tool_names", None) or set()
@@ -139,6 +128,7 @@ def register(ctx: Any) -> None:
 
     _wrapped._overlay_wrapped = True  # type: ignore[attr-defined]
     sp.build_system_prompt_parts = _wrapped
+
     logger.info(
         "assistant-prompt-overlay: registered (prompt_builder constants "
         "replaced, build_system_prompt_parts wrapped)"
