@@ -140,11 +140,21 @@ def register(ctx: Any) -> None:
                 if wf:
                     _add(wf)
 
-        # Google Workspace — inject only when the agent actually holds the
-        # google_workspace MCP tools. Counters the model's default refusal to
-        # act on the user's Google account ("here's a script to run yourself").
-        if any("google_workspace" in t for t in valid_tools):
+        # Google Workspace — counter the model's default refusal to act on the
+        # user's Google account ("here's a script to run yourself"). Inject when
+        # the agent holds google_workspace MCP tools OR is the chat operator/
+        # chief (delegate + no terminal): MCP tools register asynchronously and
+        # may be absent from valid_tool_names at prompt-build time, so we must
+        # not rely on tool-name detection alone for the operator.
+        has_google = any("google_workspace" in t for t in valid_tools)
+        if has_google or (can_delegate and no_terminal):
             _add(GOOGLE_WORKSPACE_GUIDANCE)
+        logger.info(
+            "overlay gate: chief=%s delegate=%s no_terminal=%s "
+            "google_tools=%s n_valid=%d google_block=%s",
+            is_chief, can_delegate, no_terminal, has_google,
+            len(valid_tools), has_google or (can_delegate and no_terminal),
+        )
 
         return parts
 
